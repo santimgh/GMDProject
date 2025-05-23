@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     private bool hasGun = false;
     public Sprite playerWithGunSprite; // Sprite for player when holding the gun
 
-    public GameObject placedGunPrefab;   // Optional, for dynamic scene placement
+    public GameObject placedGunPrefab;   // For dynamic scene placement
     public GameObject droppedGunPrefab;  //  This one will be used when dropping
 
     public Sprite playerWithoutGunSprite; // Unarmed player sprite
@@ -31,7 +31,7 @@ public class PlayerMovement : MonoBehaviour
     private bool canRoll = true;
     private float rollInvulDuration = 0.5f;
     private float rollCooldown = 3f;
-    public float rollSpeed = 10f; // Customize this to feel good
+    public float rollSpeed = 10f; 
     private Collider2D playerCollider;
 
 
@@ -45,7 +45,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        playerCollider = GetComponent<Collider2D>(); // 👈
+        playerCollider = GetComponent<Collider2D>(); 
 
         // Save original (unarmed) animator controller
         originalController = animator.runtimeAnimatorController;
@@ -240,7 +240,7 @@ public class PlayerMovement : MonoBehaviour
     {
         hasGun = true;
 
-        // 🔁 Reset runtime controller to force refresh
+        // Reset runtime controller to force refresh
         animator.runtimeAnimatorController = null;
         animator.runtimeAnimatorController = armedOverrideController;
 
