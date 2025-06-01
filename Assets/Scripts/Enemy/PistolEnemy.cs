@@ -30,7 +30,7 @@ public class EnemyAI : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
 
-        // Estos dos son necesarios para que el navmesh funcione bien en 2D
+        // Neccessary for NavMesh working in 2D
         agent.updateRotation = false;
         agent.updateUpAxis = false;
     }

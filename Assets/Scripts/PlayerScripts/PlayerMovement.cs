@@ -10,12 +10,6 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 movement;
     private Animator animator;
     private bool isAiming = false;
-    private bool hasGun = false;
-    public Sprite playerWithGunSprite; // Sprite for player when holding the gun
-
-    public GameObject placedGunPrefab;   // For dynamic scene placement
-    public GameObject droppedGunPrefab;  //  This one will be used when dropping
-
     public Sprite playerWithoutGunSprite; // Unarmed player sprite
     public float dropForce = 8f; // Throw speed
 
@@ -34,11 +28,7 @@ public class PlayerMovement : MonoBehaviour
     public float rollSpeed = 10f; 
     private Collider2D playerCollider;
 
-
-
-
-
-
+    public PlayerGunHandler gunHandler;
 
 
     void Start()
@@ -108,18 +98,20 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // Other Inputs
+    
     public void OnShoot(InputAction.CallbackContext context)
     {
-        if (!hasGun || !context.performed) return;
-
-        // Spawn bullet slightly in front of player
-        Vector3 spawnPos = transform.position + transform.right * 0.5f;
-        spawnPos.z = 0f;
-        GameObject bullet = Instantiate(bulletPrefab, spawnPos, transform.rotation);
-
-        Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
-        rb.velocity = transform.right * bulletSpeed;
+        if (context.started)
+        {
+            gunHandler?.StartFiring();
+        }
+        else if (context.canceled)
+        {
+            gunHandler?.StopFiring();
+        }
     }
+
+
 
 
 
@@ -183,25 +175,19 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnDropGun()
     {
-        if (!hasGun) return;
+        Debug.Log("Pressed drop");
+
+        if (gunHandler == null || !gunHandler.HasGun) return;
 
         Debug.Log("Dropping gun!");
 
-        Vector3 spawnOffset = transform.right * 0.5f;
-        GameObject droppedGun = Instantiate(droppedGunPrefab, transform.position + spawnOffset, transform.rotation);
+        Vector2 dropDir = transform.right;
+        gunHandler.DropCurrentWeapon(dropDir, dropForce);
 
-        Rigidbody2D gunRb = droppedGun.GetComponent<Rigidbody2D>();
-        gunRb.bodyType = RigidbodyType2D.Dynamic;
-        gunRb.gravityScale = 0f;
-        gunRb.velocity = transform.right * dropForce;
-        gunRb.angularVelocity = 360f;
-
-        droppedGun.GetComponent<DroppedGun>()?.MarkAsDropped();
-
-        hasGun = false;
         animator.runtimeAnimatorController = originalController;
-        
     }
+    
+
 
 
     public void OnLockAndAim(InputAction.CallbackContext context)
@@ -224,21 +210,9 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("Game paused!");
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!hasGun && other.CompareTag("Gun"))
-        {
-            Debug.Log("Picking up gun!");
-            PickupGun();
-            other.gameObject.SetActive(false);
-        }
-    }
-
-
 
     public void PickupGun()
     {
-        hasGun = true;
 
         // Reset runtime controller to force refresh
         animator.runtimeAnimatorController = null;

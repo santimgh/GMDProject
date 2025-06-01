@@ -26,7 +26,7 @@ public class Bullet : MonoBehaviour
         lineRenderer.SetPosition(1, endPos);
     }
 
-    
+
     void OnCollisionEnter2D(Collision2D collision)
     {
         // Ricochet only on non-player collisions
@@ -59,6 +59,23 @@ public class Bullet : MonoBehaviour
         ricochetCount++;
         if (ricochetCount >= maxRicochets)
         {
+            Destroy(gameObject);
+        }
+    }
+    
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Enemy"))
+        {
+            // Mata al enemigo si tiene EnemyDeath
+            other.GetComponent<EnemyDeath>()?.Die();
+
+            // Destruye la bala
+            Destroy(gameObject);
+        }
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Walls"))
+        {
+            // Opcional: destruye la bala si choca contra una pared
             Destroy(gameObject);
         }
     }
