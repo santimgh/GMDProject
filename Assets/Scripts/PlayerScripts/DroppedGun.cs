@@ -18,7 +18,7 @@ public class DroppedGun : MonoBehaviour
     {
         col.enabled = true;
 
-        // ❗ Only start the destruction timer **after** enabling the collider
+        // Only start the destruction timer **after** enabling the collider
         // and **only** if this gun was dropped by the player
         if (wasDropped)
         {

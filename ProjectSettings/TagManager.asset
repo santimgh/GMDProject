@@ -50,9 +50,9 @@ TagManager:
   - name: Wall
     uniqueID: 3416102809
     locked: 0
-  - name: Player
-    uniqueID: 55363993
-    locked: 0
   - name: Pickups
     uniqueID: 2549699375
+    locked: 0
+  - name: Player
+    uniqueID: 55363993
     locked: 0
