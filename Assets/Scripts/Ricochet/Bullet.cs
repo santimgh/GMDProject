@@ -5,6 +5,8 @@ public class Bullet : MonoBehaviour
     public int maxRicochets = 3;
     private int ricochetCount = 0;
 
+    public string shooterTag;
+
     private Rigidbody2D rb;
     private LineRenderer lineRenderer;
 
@@ -13,14 +15,14 @@ public class Bullet : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         lineRenderer = GetComponent<LineRenderer>();
 
-        Destroy(gameObject, 5f); // auto-destroy after 5s
+        Destroy(gameObject, 5f); 
     }
 
     void Update()
     {
-        // Bullet direction line effect
+      
         Vector3 startPos = transform.position;
-        Vector3 endPos = startPos + (Vector3)(rb.velocity.normalized * 0.4f); // Short visible trail
+        Vector3 endPos = startPos + (Vector3)(rb.velocity.normalized * 0.4f);
 
         lineRenderer.SetPosition(0, startPos);
         lineRenderer.SetPosition(1, endPos);
@@ -29,14 +31,14 @@ public class Bullet : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // Ricochet only on non-player collisions
+   
         if (collision.collider.CompareTag("Player"))
         {
             var player = collision.collider.GetComponent<PlayerMovement>();
             if (player != null && !player.IsRolling)
             {
                 Debug.Log("Bullet hit player!");
-                // TODO: damage logic
+            
             }
             else
             {
@@ -47,7 +49,7 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // Only bounce if contact exists
+        
         if (collision.contactCount > 0)
         {
             ContactPoint2D contact = collision.GetContact(0);
@@ -65,20 +67,40 @@ public class Bullet : MonoBehaviour
     
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy"))
+        
+        if (other.CompareTag(shooterTag))
         {
-            // Mata al enemigo si tiene EnemyDeath
-            other.GetComponent<EnemyDeath>()?.Die();
+            return;
+        }
 
-            // Destruye la bala
+   
+        if (shooterTag == "Player" && other.CompareTag("Enemy"))
+        {
+            other.GetComponent<EnemyDeath>()?.Die();
             Destroy(gameObject);
         }
+
+        else if (shooterTag == "Enemy" && other.CompareTag("Player"))
+        {
+            var player = other.GetComponent<PlayerMovement>();
+            if (player != null && !player.IsRolling)
+            {
+                Debug.Log("Bullet hit player!");
+              
+                Destroy(gameObject);
+            }
+            else
+            {
+                Debug.Log("Bullet ignored player (rolling)");
+            }
+        }
+  
         else if (other.gameObject.layer == LayerMask.NameToLayer("Walls"))
         {
-            // Opcional: destruye la bala si choca contra una pared
             Destroy(gameObject);
         }
     }
+
 
 
 

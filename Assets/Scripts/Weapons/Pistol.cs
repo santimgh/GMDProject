@@ -15,6 +15,14 @@ public class Pistol : GunBase
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
         bullet.GetComponent<Rigidbody2D>().velocity = firePoint.right * bulletSpeed;
 
+
+        var bulletScript = bullet.GetComponent<Bullet>();
+        if (bulletScript != null)
+        {
+            bulletScript.shooterTag = "Player";
+        }
+
         currentAmmo--;
     }
+
 }

@@ -21,8 +21,15 @@ public class Shotgun : GunBase
 
             GameObject bullet = Instantiate(bulletPrefab, firePoint.position + offset, rotation);
             bullet.GetComponent<Rigidbody2D>().velocity = rotation * Vector3.right * bulletSpeed;
-        }
 
+            var bulletScript = bullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.shooterTag = "Player";
+            }
+
+        }
+        
         currentAmmo--;
     }
 }

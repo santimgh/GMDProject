@@ -25,18 +25,18 @@ public class PlayerGunHandler : MonoBehaviour
     {
         if (currentGun != null)
         {
-            Debug.Log("⛔ Ya tienes un arma equipada. Suéltala primero.");
+            Debug.Log(" Ya tienes un arma equipada. Suéltala primero.");
             return;
         }
 
         currentGun = weapon.GetComponent<GunBase>();
 
-        // Parent a la mano
+        
         weapon.transform.SetParent(weaponHoldPoint);
         weapon.transform.localPosition = Vector3.zero;
         weapon.transform.localRotation = Quaternion.identity;
 
-        // Desactivar física
+       
         Rigidbody2D rb = weapon.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
@@ -53,7 +53,7 @@ public class PlayerGunHandler : MonoBehaviour
             col.enabled = false;
         }
 
-        Debug.Log("✅ Arma equipada: " + currentGun.GetType().Name);
+        Debug.Log(" Arma equipada: " + currentGun.GetType().Name);
     }
 
 
@@ -64,7 +64,7 @@ public class PlayerGunHandler : MonoBehaviour
 
         if (currentGun != null && !currentGun.IsAutomatic)
         {
-            currentGun.Shoot(); // Dispara solo una vez si es semi-automática
+            currentGun.Shoot(); 
         }
     }
 
@@ -77,16 +77,16 @@ public class PlayerGunHandler : MonoBehaviour
     {
         if (currentGun == null)
         {
-            Debug.LogWarning("❌ No hay arma equipada.");
+            Debug.LogWarning(" No hay arma equipada.");
             return;
         }
 
         GameObject droppedWeapon = currentGun.gameObject;
 
-        // Reparent a null para soltarla
+        
         droppedWeapon.transform.SetParent(null);
 
-        // Activar física
+    
         Rigidbody2D rb = droppedWeapon.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
@@ -97,20 +97,20 @@ public class PlayerGunHandler : MonoBehaviour
             rb.angularVelocity = 360f;
         }
 
-        // Activar collider como trigger
+       
         Collider2D col = droppedWeapon.GetComponent<Collider2D>();
         if (col != null)
         {
             col.enabled = true;
-            col.isTrigger = false; // ✅ primero como colisión normal
-            StartCoroutine(EnablePickupTriggerAfterDelay(col, 3f)); // ⏱️ luego se vuelve trigger
+            col.isTrigger = false; 
+            StartCoroutine(EnablePickupTriggerAfterDelay(col, 3f)); 
 
         }
 
         currentGun = null;
         lastDroppedTime = Time.time;
 
-        Debug.Log("🔽 Arma soltada: " + droppedWeapon.name);
+        Debug.Log(" Arma soltada: " + droppedWeapon.name);
     }
 
 
@@ -120,7 +120,7 @@ public class PlayerGunHandler : MonoBehaviour
         if (col != null)
         {
             col.isTrigger = true;
-            Debug.Log("🔁 Collider cambiado a trigger para permitir recogida");
+            Debug.Log(" Collider cambiado a trigger para permitir recogida");
         }
     }
 

@@ -1,23 +1,16 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum EnemyState
-{
-    Idle,
-    Shooting,
-    Chasing
-}
-
-[RequireComponent(typeof(NavMeshAgent))]
-public class EnemyAI : MonoBehaviour
+public class EnemyShotgunAI : MonoBehaviour
 {
     public float visionRadius = 8f;
     public float loseSightRadius = 12f;
-    public float shootingCooldown = 1f;
+    public float shootingCooldown = 2f;
+
     public GameObject bulletPrefab;
     public float bulletSpeed = 10f;
+    public float spreadAngle = 15f; 
 
     private Transform player;
     private EnemyState currentState = EnemyState.Idle;
@@ -30,7 +23,7 @@ public class EnemyAI : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
 
-        // Neccessary for NavMesh working in 2D
+        // Necesario para NavMesh en 2D
         agent.updateRotation = false;
         agent.updateUpAxis = false;
     }
@@ -55,7 +48,7 @@ public class EnemyAI : MonoBehaviour
 
                 if (Time.time - lastShotTime > shootingCooldown)
                 {
-                    ShootAtPlayer();
+                    ShootShotgun();
                     lastShotTime = Time.time;
                 }
 
@@ -93,17 +86,23 @@ public class EnemyAI : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
-    void ShootAtPlayer()
+    void ShootShotgun()
     {
         Vector3 spawnPos = transform.position + transform.right * 0.5f;
-        GameObject bullet = Instantiate(bulletPrefab, spawnPos, transform.rotation);
-        bullet.GetComponent<Rigidbody2D>().velocity = transform.right * bulletSpeed;
 
-        
-        var bulletScript = bullet.GetComponent<Bullet>();
-        if (bulletScript != null)
+        for (int i = -1; i <= 1; i++)
         {
-            bulletScript.shooterTag = "Enemy";
+            Quaternion rotation = transform.rotation * Quaternion.Euler(0, 0, i * spreadAngle);
+            Vector3 offset = transform.up * i * 0.1f;
+
+            GameObject bullet = Instantiate(bulletPrefab, spawnPos + offset, rotation);
+            bullet.GetComponent<Rigidbody2D>().velocity = rotation * Vector3.right * bulletSpeed;
+
+            var bulletScript = bullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.shooterTag = "Enemy";
+            }
         }
     }
 
