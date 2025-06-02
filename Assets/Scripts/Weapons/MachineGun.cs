@@ -21,6 +21,12 @@ public class MachineGun : GunBase
             bullet.GetComponent<Rigidbody2D>().velocity = firePoint.right * bulletSpeed;
             lastFireTime = Time.time;
 
+            var bulletScript = bullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.shooterTag = "Player";
+            }
+
             currentAmmo--;
         }
     }

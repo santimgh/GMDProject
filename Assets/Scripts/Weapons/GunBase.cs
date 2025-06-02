@@ -8,8 +8,8 @@ public abstract class GunBase : MonoBehaviour
 
     public virtual bool IsAutomatic => false;
 
-    public int maxAmmo = 0;          // cantidad máxima de balas
-    protected int currentAmmo = 0;   // balas restantes
+    public int maxAmmo = 0;          
+    protected int currentAmmo = 0; 
 
     public abstract void Shoot();
 
