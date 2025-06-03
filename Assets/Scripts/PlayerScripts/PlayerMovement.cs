@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
-
+using UnityEngine.EventSystems; 
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -16,10 +16,19 @@ public class PlayerMovement : MonoBehaviour
     public AnimatorOverrideController armedOverrideController;
     private RuntimeAnimatorController originalController;
 
+    public GameObject pauseMenuCanvas;
+    private bool isPaused = false;
+
     public GameObject bulletPrefab;
     public float bulletSpeed = 15f;
     private bool isRolling = false;
     public bool IsRolling => isRolling;
+
+    public GameObject resumeButton;
+
+    public GameObject quitButton;
+
+    public PlayerInput playerInput;
 
 
     private bool canRoll = true;
@@ -35,15 +44,19 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        playerCollider = GetComponent<Collider2D>(); 
+        playerCollider = GetComponent<Collider2D>();
 
         // Save original (unarmed) animator controller
         originalController = animator.runtimeAnimatorController;
+        pauseMenuCanvas.SetActive(false);
+        //pauseMenuCanvas.SetActive(true); // Solo temporal
+
     }
 
 
     void Update()
-    {
+    {   
+        if (isPaused) return;
         // Set the "isWalking" parameter in the Animator to true if the player is moving (non-zero movement vector), false otherwise.
         // This is useful for switching between idle and walk animations.
         animator.SetBool("isWalking", movement.magnitude > 0);
@@ -83,7 +96,7 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isRolling)
+        if (isPaused || isRolling)
             return; // Don't apply movement if rolling
 
         rb.velocity = isAiming ? Vector2.zero : movement * moveSpeed;
@@ -94,6 +107,7 @@ public class PlayerMovement : MonoBehaviour
     // Movement
     public void OnMovement(InputAction.CallbackContext context)
     {
+        if (isPaused) return;
         movement = context.ReadValue<Vector2>();
     }
 
@@ -101,6 +115,14 @@ public class PlayerMovement : MonoBehaviour
     
     public void OnShoot(InputAction.CallbackContext context)
     {
+        if (isPaused)
+        {
+            gunHandler?.StopFiring(); // Por si acaso el botón se mantiene presionado
+            return;
+        }
+
+        Debug.Log("Shoot triggered. IsPaused = " + isPaused);
+
         if (context.started)
         {
             gunHandler?.StartFiring();
@@ -115,8 +137,12 @@ public class PlayerMovement : MonoBehaviour
 
 
 
+
+
     public void OnRoll()
     {
+        if (isPaused) return;
+
         if (!canRoll) return;
 
         Debug.Log("Rolling!");
@@ -125,6 +151,7 @@ public class PlayerMovement : MonoBehaviour
 
     private IEnumerator RollRoutine()
     {
+        
         isRolling = true;
         canRoll = false;
 
@@ -170,11 +197,14 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnParry()
     {
+        if (isPaused) return;
         Debug.Log("Parry!");
     }
 
     public void OnDropGun()
     {
+        if (isPaused) return;
+
         Debug.Log("Pressed drop");
 
         if (gunHandler == null || !gunHandler.HasGun) return;
@@ -192,6 +222,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnLockAndAim(InputAction.CallbackContext context)
     {
+        if (isPaused) return;
+
         if (context.started)
         {
             isAiming = true;
@@ -205,15 +237,76 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    public void OnPause()
+    public void OnPause(InputAction.CallbackContext context)
     {
-        Debug.Log("Game paused!");
+        if (!context.performed) return;
+        if (isPaused) ResumeGame();
+        else PauseGame();
     }
+
+
+
+    private void PauseGame()
+    {
+        Debug.Log("PauseGame() called");
+
+        Time.timeScale = 0f;
+        isPaused = true;
+
+        Debug.Log("Game paused. Setting canvas active");
+        pauseMenuCanvas.SetActive(true);
+
+        Debug.Log("Switching to UI action map");
+        playerInput.SwitchCurrentActionMap("UI");
+
+        gunHandler?.StopFiring();
+        Debug.Log("Stopped firing if it was active");
+
+        StartCoroutine(SelectResumeNextFrame());
+    }
+
+    private IEnumerator SelectResumeNextFrame()
+    {
+        yield return null;
+        Debug.Log("Selecting resume button in EventSystem");
+        EventSystem.current.SetSelectedGameObject(null);
+        EventSystem.current.SetSelectedGameObject(resumeButton);
+    }
+
+    private void ResumeGame()
+    {
+        Debug.Log("ResumeGame() called");
+
+        Time.timeScale = 1f;
+        isPaused = false;
+
+        Debug.Log("Deactivating canvas");
+        pauseMenuCanvas.SetActive(false);
+
+        Debug.Log("Switching to Default action map");
+        playerInput.SwitchCurrentActionMap("Default");
+    }
+
+
+
+    public void QuitGame()
+    {
+        Debug.Log("Quitting game...");
+
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false; // Solo para tests en el editor
+    #else
+        Application.Quit(); // Para builds reales
+    #endif
+    }
+
+
 
 
     public void PickupGun()
     {
 
+        if (isPaused) return;
         // Reset runtime controller to force refresh
         animator.runtimeAnimatorController = null;
         animator.runtimeAnimatorController = armedOverrideController;
