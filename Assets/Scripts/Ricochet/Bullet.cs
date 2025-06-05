@@ -5,7 +5,7 @@ public class Bullet : MonoBehaviour
     public int maxRicochets = 3;
     private int ricochetCount = 0;
 
-    public string shooterTag;
+    public string shooterTag; // Used to prevent friendly fire
 
     private Rigidbody2D rb;
     private LineRenderer lineRenderer;
@@ -15,11 +15,13 @@ public class Bullet : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         lineRenderer = GetComponent<LineRenderer>();
 
+        // Automatically destroy the bullet after 5 seconds to clean up
         Destroy(gameObject, 5f);
     }
 
     void Update()
     {
+        // Draw a short trail using LineRenderer
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + (Vector3)(rb.velocity.normalized * 0.4f);
 
@@ -27,13 +29,11 @@ public class Bullet : MonoBehaviour
         lineRenderer.SetPosition(1, endPos);
     }
 
-    
     void OnCollisionEnter2D(Collision2D collision)
     {
         GameObject other = collision.gameObject;
 
-        Debug.Log("Bullet collided with: " + collision.gameObject.name + " (Layer: " + LayerMask.LayerToName(collision.gameObject.layer) + ")");
-
+        // Destroy bullet on hitting movable objects 
         if (other.CompareTag("Movable"))
         {
             Debug.Log("Bullet hit a movable object!");
@@ -41,6 +41,7 @@ public class Bullet : MonoBehaviour
             return;
         }
 
+        // Break windows on hit
         if (other.CompareTag("Window"))
         {
             BreakableWindow window = other.GetComponent<BreakableWindow>();
@@ -54,8 +55,7 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-
-        // Player
+        // Damage player if not rolling
         if (other.CompareTag("Player"))
         {
             var player = other.GetComponent<PlayerMovement>();
@@ -72,10 +72,10 @@ public class Bullet : MonoBehaviour
             }
         }
 
-        // Enemy
+        // Damage enemy only if bullet wasn't fired by another enemy
         else if (other.CompareTag("Enemy"))
         {
-            if (shooterTag != "Enemy") // ✅ Solo mata enemigos si NO fue disparada por otro enemigo
+            if (shooterTag != "Enemy")
             {
                 Debug.Log("Bullet hit enemy!");
                 other.GetComponent<DeathScript>()?.Die();
@@ -84,27 +84,21 @@ public class Bullet : MonoBehaviour
             }
         }
 
-
-        // Rebote
+        // Ricochet logic
         if (collision.contactCount > 0)
         {
             ContactPoint2D contact = collision.GetContact(0);
             Vector2 normal = contact.normal;
-            rb.velocity = Vector2.Reflect(rb.velocity, normal);
 
+            // Reflect bullet's velocity based on surface normal
+            rb.velocity = Vector2.Reflect(rb.velocity, normal);
             ricochetCount++;
 
-            //  Solo destruir si excede rebotes permitidos
+            // Destroy bullet if ricochet limit is exceeded
             if (ricochetCount >= maxRicochets)
             {
                 Destroy(gameObject);
             }
         }
-
-
-
     }
-
-
-
 }

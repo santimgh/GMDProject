@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 public class MainMenuController : MonoBehaviour
 {
     public GameObject startButton; // First selected
-    public string firstLevelSceneName = "FirstPlayable"; // Replace with your actual scene name
+    public string firstLevelSceneName = "FirstPlayable"; 
 
     void Start()
     {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+// Enum for enemy behavior states
 public enum EnemyState
 {
     Idle,
@@ -19,6 +20,9 @@ public class EnemyAI : MonoBehaviour
     public GameObject bulletPrefab;
     public float bulletSpeed = 10f;
 
+    public AudioClip shootSound;
+    private AudioSource audioSource;
+
     private Transform player;
     private EnemyState currentState = EnemyState.Idle;
     private float lastShotTime;
@@ -29,8 +33,10 @@ public class EnemyAI : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
+        EnemyManager.Instance.RegisterEnemy();
+        audioSource = GetComponent<AudioSource>();
 
-        // Neccessary for NavMesh working in 2D
+        // Required to make NavMeshAgent work properly in 2D
         agent.updateRotation = false;
         agent.updateUpAxis = false;
     }
@@ -39,13 +45,15 @@ public class EnemyAI : MonoBehaviour
     {
         if (player == null)
             return;
-            
+
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
         switch (currentState)
         {
             case EnemyState.Idle:
                 agent.ResetPath();
+
+                // Transition to shooting if player is in sight
                 if (distanceToPlayer <= visionRadius && CanSeePlayer())
                 {
                     hasSeenPlayer = true;
@@ -56,12 +64,14 @@ public class EnemyAI : MonoBehaviour
             case EnemyState.Shooting:
                 LookAtPlayer();
 
+                // Shoot only when cooldown has elapsed
                 if (Time.time - lastShotTime > shootingCooldown)
                 {
                     ShootAtPlayer();
                     lastShotTime = Time.time;
                 }
 
+                // If player is no longer visible, start chasing
                 if (!CanSeePlayer())
                 {
                     currentState = EnemyState.Chasing;
@@ -69,8 +79,10 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case EnemyState.Chasing:
+                // Move towards the player's last known position
                 agent.SetDestination(player.position);
 
+                // Resume shooting if player is visible again
                 if (distanceToPlayer <= visionRadius && CanSeePlayer())
                 {
                     currentState = EnemyState.Shooting;
@@ -79,6 +91,7 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    // Check line of sight using a 2D raycast
     bool CanSeePlayer()
     {
         Vector2 directionToPlayer = (player.position - transform.position).normalized;
@@ -89,6 +102,7 @@ public class EnemyAI : MonoBehaviour
         return hit.collider != null && hit.collider.CompareTag("Player");
     }
 
+    // Rotate enemy to face the player
     void LookAtPlayer()
     {
         Vector2 dir = (player.position - transform.position).normalized;
@@ -96,20 +110,25 @@ public class EnemyAI : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
+    // Spawn and shoot a bullet toward the player
     void ShootAtPlayer()
     {
         Vector3 spawnPos = transform.position + transform.right * 0.5f;
         GameObject bullet = Instantiate(bulletPrefab, spawnPos, transform.rotation);
         bullet.GetComponent<Rigidbody2D>().velocity = transform.right * bulletSpeed;
 
-        
         var bulletScript = bullet.GetComponent<Bullet>();
         if (bulletScript != null)
         {
             bulletScript.shooterTag = "Enemy";
         }
-    }
 
+        // Play shooting sound 
+        if (shootSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(shootSound);
+        }
+    }
 
     void OnDrawGizmosSelected()
     {

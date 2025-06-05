@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+// State enum for melee enemy behavior
 public enum MeleeEnemyState
 {
     Idle,
@@ -10,7 +11,7 @@ public enum MeleeEnemyState
     Attacking
 }
 
-[RequireComponent(typeof(NavMeshAgent))]
+
 public class MeleeEnemy : MonoBehaviour
 {
     public float visionRadius = 8f;
@@ -28,8 +29,9 @@ public class MeleeEnemy : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
+        EnemyManager.Instance.RegisterEnemy();
 
-        // Needed for working in 2D
+        // Needed for NavMeshAgent to work correctly in 2D
         agent.updateRotation = false;
         agent.updateUpAxis = false;
     }
@@ -45,6 +47,8 @@ public class MeleeEnemy : MonoBehaviour
         {
             case MeleeEnemyState.Idle:
                 agent.ResetPath();
+
+                // Start chasing if player is seen within vision radius
                 if (distanceToPlayer <= visionRadius && CanSeePlayer())
                 {
                     currentState = MeleeEnemyState.Chasing;
@@ -55,10 +59,12 @@ public class MeleeEnemy : MonoBehaviour
                 agent.SetDestination(player.position);
                 LookAtPlayer();
 
+                // Switch to attacking when in range
                 if (distanceToPlayer <= attackRange)
                 {
                     currentState = MeleeEnemyState.Attacking;
                 }
+                // Return to idle if player is out of sight and far away
                 else if (!CanSeePlayer() && distanceToPlayer > loseSightRadius)
                 {
                     currentState = MeleeEnemyState.Idle;
@@ -69,12 +75,14 @@ public class MeleeEnemy : MonoBehaviour
                 agent.ResetPath();
                 LookAtPlayer();
 
+                // Attack only after cooldown
                 if (Time.time - lastAttackTime >= attackCooldown)
                 {
                     AttackPlayer();
                     lastAttackTime = Time.time;
                 }
 
+                // Resume chasing if player moves out of range
                 if (distanceToPlayer > attackRange)
                 {
                     currentState = MeleeEnemyState.Chasing;
@@ -83,6 +91,7 @@ public class MeleeEnemy : MonoBehaviour
         }
     }
 
+    // Rotate enemy to face the player
     void LookAtPlayer()
     {
         Vector2 dir = (player.position - transform.position).normalized;
@@ -90,9 +99,10 @@ public class MeleeEnemy : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
+    // Damage logic when attacking the player
     void AttackPlayer()
     {
-        Debug.Log("¡Jugador golpeado!");
+        Debug.Log("Player hit!");
 
         var death = player.GetComponent<DeathScript>();
         if (death != null && death.isPlayer)
@@ -101,8 +111,7 @@ public class MeleeEnemy : MonoBehaviour
         }
     }
 
-
-
+    // Line-of-sight check using raycast
     bool CanSeePlayer()
     {
         Vector2 directionToPlayer = (player.position - transform.position).normalized;
@@ -113,6 +122,7 @@ public class MeleeEnemy : MonoBehaviour
         return hit.collider != null && hit.collider.CompareTag("Player");
     }
 
+    // Draw vision, chase, and attack ranges in the editor
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
