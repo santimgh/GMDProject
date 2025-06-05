@@ -25,10 +25,19 @@ public class GameplayUI : MonoBehaviour
     {
 
         winCanvas.SetActive(false);
+        if (dieMessageText != null)
+            dieMessageText.text = "";
 
         UpdateEnemyCount(0);
         ShowAmmo(false);
     }
+
+    public void ShowDeathMessage()
+    {
+        if (dieMessageText != null)
+            dieMessageText.text = "YOU DIED!!!";
+    }
+
 
     // Triggered when the player wins the game
     public void ShowVictoryScreen()

@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 5255201169308331398}
   - component: {fileID: 3389164287559850758}
   - component: {fileID: 2925752338469100478}
-  - component: {fileID: 1491883700001680258}
   - component: {fileID: 2425868845466647416}
+  - component: {fileID: 3260939187210514455}
   m_Layer: 0
   m_Name: MachineGun
   m_TagString: Gun
@@ -181,18 +181,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
---- !u!114 &1491883700001680258
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4112548342931108737}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b86eee6bbf6de44988233e64d9fa24d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!82 &2425868845466647416
 AudioSource:
   m_ObjectHideFlags: 0
@@ -289,6 +277,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3260939187210514455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4112548342931108737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c021dbe23c4851b4bbd86ff1ca2d1f89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5672471740453112345
 GameObject:
   m_ObjectHideFlags: 0
