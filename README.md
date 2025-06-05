@@ -14,3 +14,5 @@ Third devblog | Core Gameplay Prototype: https://devblog-gmd-santi.blogspot.com/
 
 Fourth devblog | Enemy AIs, UI logic and Adjusting Weapons Architecture: http://devblog-gmd-santi.blogspot.com/2025/05/enemy-ais-ui-logic-and-adjusting.html
 
+Fith devblog | Enemy AIs, UI logic and Adjusting Weapons Architecture: https://devblog-gmd-santi.blogspot.com/2025/05/enemy-ais-ui-logic-and-adjusting.html
+
