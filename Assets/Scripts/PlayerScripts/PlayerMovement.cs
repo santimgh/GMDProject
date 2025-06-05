@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
-using UnityEngine.EventSystems;
+using UnityEngine.EventSystems; 
 using UnityEngine.SceneManagement;
+
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -11,15 +12,17 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 movement;
     private Animator animator;
     private bool isAiming = false;
-    public Sprite playerWithoutGunSprite;
-    public float dropForce = 8f;
+    public Sprite playerWithoutGunSprite; // Unarmed player sprite
+    public float dropForce = 8f; // Throw speed
 
     private SpriteRenderer spriteRenderer;
+
 
     public AnimatorOverrideController armedOverrideController;
     private RuntimeAnimatorController originalController;
 
     public GameObject pauseMenuCanvas;
+
     private bool isPaused = false;
 
     public GameObject bulletPrefab;
@@ -28,20 +31,24 @@ public class PlayerMovement : MonoBehaviour
     public bool IsRolling => isRolling;
 
     public GameObject resumeButton;
+
     public GameObject quitButton;
 
     public PlayerInput playerInput;
 
+
     private bool canRoll = true;
     private float rollInvulDuration = 0.5f;
     private float rollCooldown = 3f;
-    public float rollSpeed = 10f;
+    public float rollSpeed = 10f; 
     private Collider2D playerCollider;
 
     public PlayerGunHandler gunHandler;
 
     private bool isPushingObject = false;
-    public float pushSlowdownFactor = 0.5f;
+    public float pushSlowdownFactor = 0.5f; // 50% slower
+
+
 
     void Start()
     {
@@ -50,42 +57,60 @@ public class PlayerMovement : MonoBehaviour
         playerCollider = GetComponent<Collider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        // Save the original unarmed animation controller
-        originalController = animator.runtimeAnimatorController;
 
-       
+        // Save original (unarmed) animator controller
+        originalController = animator.runtimeAnimatorController;
         pauseMenuCanvas.SetActive(false);
+
     }
+
 
     void Update()
-    {
+    {   
         if (isPaused) return;
-
-        // Toggle walking animation state based on movement
+        // Set the "isWalking" parameter in the Animator to true if the player is moving (non-zero movement vector), false otherwise.
+        // This is useful for switching between idle and walk animations.
         animator.SetBool("isWalking", movement.magnitude > 0);
 
+        // If the player is currently in "lock and aim" mode 
         if (isAiming)
         {
-            // Rotate toward mouse position while aiming
+            // Get the current mouse position on the screen and convert it to world coordinates.
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+
+            // Calculate the direction vector from the player to the mouse position.
             Vector2 direction = mousePos - transform.position;
+
+            // Calculate the angle (in degrees) between the x-axis and the direction vector using atan2.
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+            // Rotate the player to face the calculated angle (point toward the mouse).
             transform.rotation = Quaternion.Euler(0, 0, angle);
         }
-        else if (movement != Vector2.zero)
+        else
         {
-            // Rotate toward movement direction
-            float angle = Mathf.Atan2(movement.y, movement.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
+            // If the player is not aiming, rotate based on the movement direction.
+            if (movement != Vector2.zero)
+            {
+                // Calculate the angle from the movement vector.
+                float angle = Mathf.Atan2(movement.y, movement.x) * Mathf.Rad2Deg;
+
+                // Rotate the player to face the direction they are moving in.
+                transform.rotation = Quaternion.Euler(0, 0, angle);
+            }
         }
     }
+
+
+
+
 
     void FixedUpdate()
     {
         if (isPaused || isRolling)
-            return;
+            return; // Don't apply movement if rolling
 
-        // Adjust movement speed if pushing an object
+        rb.velocity = isAiming ? Vector2.zero : movement * moveSpeed;
         float effectiveSpeed = isPushingObject ? moveSpeed * pushSlowdownFactor : moveSpeed;
         rb.velocity = isAiming ? Vector2.zero : movement * effectiveSpeed;
     }
@@ -106,29 +131,45 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+
+
     public void OnMovement(InputAction.CallbackContext context)
     {
         if (isPaused) return;
         movement = context.ReadValue<Vector2>();
     }
 
+    
     public void OnShoot(InputAction.CallbackContext context)
     {
         if (isPaused)
         {
-            gunHandler?.StopFiring();
+            gunHandler?.StopFiring(); // Just in case the button is being held
             return;
         }
 
         if (context.started)
+        {
             gunHandler?.StartFiring();
+        }
         else if (context.canceled)
+        {
             gunHandler?.StopFiring();
+        }
     }
+
+
+
+
+
+
 
     public void OnRoll()
     {
-        if (isPaused || !canRoll) return;
+        if (isPaused) return;
+
+        if (!canRoll) return;
+
         StartCoroutine(RollRoutine());
     }
 
@@ -137,11 +178,10 @@ public class PlayerMovement : MonoBehaviour
         isRolling = true;
         canRoll = false;
 
-        // Visual feedback making a semi-transparent sprite
         Color originalColor = spriteRenderer.color;
         spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
 
-        // Temporarily ignore collisions with bullets
+        // Invulnerability
         Collider2D[] allBullets = FindObjectsOfType<Collider2D>();
         foreach (var bulletCol in allBullets)
         {
@@ -159,43 +199,59 @@ public class PlayerMovement : MonoBehaviour
 
         rb.velocity = Vector2.zero;
         isRolling = false;
+
+        // Restore color
         spriteRenderer.color = originalColor;
 
-        // Re-enable collisions with bullets
         foreach (var bulletCol in allBullets)
         {
             if (bulletCol != null && bulletCol.CompareTag("Bullet"))
+            {
                 Physics2D.IgnoreCollision(playerCollider, bulletCol, false);
+            }
         }
 
         yield return new WaitForSeconds(rollCooldown);
         canRoll = true;
     }
 
-    // Runned out of time for implementing :(
+
+
+
     public void OnParry()
     {
         if (isPaused) return;
-        Debug.Log("Parry!");
     }
 
     public void OnDropGun()
     {
-        if (isPaused || gunHandler == null || !gunHandler.HasGun) return;
+        if (isPaused) return;
+
+        if (gunHandler == null || !gunHandler.HasGun) return;
 
         Vector2 dropDir = transform.right;
         gunHandler.DropCurrentWeapon(dropDir, dropForce);
 
-        // Reset animation controller to unarmed
         animator.runtimeAnimatorController = originalController;
     }
+    
+
+
 
     public void OnLockAndAim(InputAction.CallbackContext context)
     {
         if (isPaused) return;
 
-        isAiming = context.started;
+        if (context.started)
+        {
+            isAiming = true;
+        }
+        else if (context.canceled)
+        {
+            isAiming = false;
+        }
     }
+
 
     public void OnPause(InputAction.CallbackContext context)
     {
@@ -204,15 +260,20 @@ public class PlayerMovement : MonoBehaviour
         else PauseGame();
     }
 
+
+
     private void PauseGame()
     {
+
         Time.timeScale = 0f;
         isPaused = true;
+
         pauseMenuCanvas.SetActive(true);
+
         playerInput.SwitchCurrentActionMap("UI");
+
         gunHandler?.StopFiring();
 
-        // Select resume button in UI
         StartCoroutine(SelectResumeNextFrame());
     }
 
@@ -225,15 +286,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void ResumeGame()
     {
+
         Time.timeScale = 1f;
         isPaused = false;
+
         pauseMenuCanvas.SetActive(false);
+
         playerInput.SwitchCurrentActionMap("Default");
     }
 
+
+
     public void QuitGame()
     {
-        SceneManager.LoadScene("MainMenuUI");
+        Debug.Log("Returning to Main Menu...");
+        SceneManager.LoadScene("MainMenuUI"); 
     }
 
     public void RestartLevel()
@@ -242,12 +309,21 @@ public class PlayerMovement : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
+
+
+
+
     public void PickupGun()
     {
-        if (isPaused) return;
 
-        // Force animation override reload
+        if (isPaused) return;
+        // Reset runtime controller to force refresh
         animator.runtimeAnimatorController = null;
         animator.runtimeAnimatorController = armedOverrideController;
+
+        Debug.Log("Gun picked up — controller set to armedOverrideController");
     }
+
+
+
 }

@@ -26,10 +26,8 @@ public class DeathScript : MonoBehaviour
 
                 // Show death message
                 var ui = FindObjectOfType<GameplayUI>();
-                if (ui != null && ui.dieMessageText != null)
-                {
-                    ui.dieMessageText.text = "YOU DIED!!!";
-                }
+                ui?.ShowDeathMessage();
+
             }
 
 
