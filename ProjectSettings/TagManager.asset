@@ -7,6 +7,8 @@ TagManager:
   - Gun
   - Bullet
   - Enemy
+  - Movable
+  - Window
   layers:
   - Default
   - TransparentFX

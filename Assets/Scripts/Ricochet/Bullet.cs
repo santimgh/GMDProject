@@ -15,12 +15,11 @@ public class Bullet : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         lineRenderer = GetComponent<LineRenderer>();
 
-        Destroy(gameObject, 5f); 
+        Destroy(gameObject, 5f);
     }
 
     void Update()
     {
-      
         Vector3 startPos = transform.position;
         Vector3 endPos = startPos + (Vector3)(rb.velocity.normalized * 0.4f);
 
@@ -28,81 +27,83 @@ public class Bullet : MonoBehaviour
         lineRenderer.SetPosition(1, endPos);
     }
 
-
+    
     void OnCollisionEnter2D(Collision2D collision)
     {
-   
-        if (collision.collider.CompareTag("Player"))
+        GameObject other = collision.gameObject;
+
+        Debug.Log("Bullet collided with: " + collision.gameObject.name + " (Layer: " + LayerMask.LayerToName(collision.gameObject.layer) + ")");
+
+        if (other.CompareTag("Movable"))
         {
-            var player = collision.collider.GetComponent<PlayerMovement>();
-            if (player != null && !player.IsRolling)
+            Debug.Log("Bullet hit a movable object!");
+            Destroy(gameObject);
+            return;
+        }
+
+        if (other.CompareTag("Window"))
+        {
+            BreakableWindow window = other.GetComponent<BreakableWindow>();
+            if (window != null)
             {
-                Debug.Log("Bullet hit player!");
-            
-            }
-            else
-            {
-                Debug.Log("Bullet ignored player (rolling)");
+                Vector2 bulletDir = rb.velocity.normalized;
+                window.Break(bulletDir);
             }
 
             Destroy(gameObject);
             return;
         }
 
-        
+
+        // Player
+        if (other.CompareTag("Player"))
+        {
+            var player = other.GetComponent<PlayerMovement>();
+            if (player != null && !player.IsRolling)
+            {
+                Debug.Log("Bullet hit player! Killing.");
+                other.GetComponent<DeathScript>()?.Die();
+                Destroy(gameObject);
+                return;
+            }
+            else
+            {
+                Debug.Log("Bullet ignored player (rolling)");
+            }
+        }
+
+        // Enemy
+        else if (other.CompareTag("Enemy"))
+        {
+            if (shooterTag != "Enemy") // ✅ Solo mata enemigos si NO fue disparada por otro enemigo
+            {
+                Debug.Log("Bullet hit enemy!");
+                other.GetComponent<DeathScript>()?.Die();
+                Destroy(gameObject);
+                return;
+            }
+        }
+
+
+        // Rebote
         if (collision.contactCount > 0)
         {
             ContactPoint2D contact = collision.GetContact(0);
             Vector2 normal = contact.normal;
             rb.velocity = Vector2.Reflect(rb.velocity, normal);
-        }
 
+            ricochetCount++;
 
-        ricochetCount++;
-        if (ricochetCount >= maxRicochets)
-        {
-            Destroy(gameObject);
-        }
-    }
-    
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        
-        if (other.CompareTag(shooterTag))
-        {
-            return;
-        }
-
-   
-        if (shooterTag == "Player" && other.CompareTag("Enemy"))
-        {
-            other.GetComponent<EnemyDeath>()?.Die();
-            Destroy(gameObject);
-        }
-
-        else if (shooterTag == "Enemy" && other.CompareTag("Player"))
-        {
-            var player = other.GetComponent<PlayerMovement>();
-            if (player != null && !player.IsRolling)
+            //  Solo destruir si excede rebotes permitidos
+            if (ricochetCount >= maxRicochets)
             {
-                Debug.Log("Bullet hit player!");
-              
                 Destroy(gameObject);
             }
-            else
-            {
-                Debug.Log("Bullet ignored player (rolling)");
-            }
         }
-  
-        else if (other.gameObject.layer == LayerMask.NameToLayer("Walls"))
-        {
-            Destroy(gameObject);
-        }
+
+
+
     }
-
-
-
 
 
 

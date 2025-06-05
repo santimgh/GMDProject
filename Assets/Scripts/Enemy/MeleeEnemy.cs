@@ -36,6 +36,9 @@ public class MeleeEnemy : MonoBehaviour
 
     void Update()
     {
+        if (player == null)
+            return;
+
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
         switch (currentState)
@@ -91,9 +94,13 @@ public class MeleeEnemy : MonoBehaviour
     {
         Debug.Log("¡Jugador golpeado!");
 
-        // Matar al jugador si tiene el método Die()
-        // player.GetComponent<PlayerDeath>()?.Die();
+        var death = player.GetComponent<DeathScript>();
+        if (death != null && death.isPlayer)
+        {
+            death.Die();
+        }
     }
+
 
 
     bool CanSeePlayer()
