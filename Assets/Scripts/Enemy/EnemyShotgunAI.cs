@@ -12,6 +12,9 @@ public class EnemyShotgunAI : MonoBehaviour
     public float bulletSpeed = 10f;
     public float spreadAngle = 15f; 
 
+    public AudioClip shootSound;
+    private AudioSource audioSource;
+
     private Transform player;
     private EnemyState currentState = EnemyState.Idle;
     private float lastShotTime;
@@ -22,8 +25,10 @@ public class EnemyShotgunAI : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
+        EnemyManager.Instance.RegisterEnemy();
+        audioSource = GetComponent<AudioSource>();
 
-        // Necesario para NavMesh en 2D
+        // Allow NavMeshAgent to work in a 2D environment
         agent.updateRotation = false;
         agent.updateUpAxis = false;
     }
@@ -32,13 +37,14 @@ public class EnemyShotgunAI : MonoBehaviour
     {
         if (player == null)
             return;
-            
+
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
         switch (currentState)
         {
             case EnemyState.Idle:
                 agent.ResetPath();
+                // Transition to shooting if player is in sight and within vision radius
                 if (distanceToPlayer <= visionRadius && CanSeePlayer())
                 {
                     hasSeenPlayer = true;
@@ -49,12 +55,14 @@ public class EnemyShotgunAI : MonoBehaviour
             case EnemyState.Shooting:
                 LookAtPlayer();
 
+                // Fire only if cooldown has passed
                 if (Time.time - lastShotTime > shootingCooldown)
                 {
                     ShootShotgun();
                     lastShotTime = Time.time;
                 }
 
+                // Switch to chasing if player is no longer visible
                 if (!CanSeePlayer())
                 {
                     currentState = EnemyState.Chasing;
@@ -64,6 +72,7 @@ public class EnemyShotgunAI : MonoBehaviour
             case EnemyState.Chasing:
                 agent.SetDestination(player.position);
 
+                // Resume shooting if player is visible again
                 if (distanceToPlayer <= visionRadius && CanSeePlayer())
                 {
                     currentState = EnemyState.Shooting;
@@ -72,6 +81,7 @@ public class EnemyShotgunAI : MonoBehaviour
         }
     }
 
+    // Raycast to check for line of sight to the player
     bool CanSeePlayer()
     {
         Vector2 directionToPlayer = (player.position - transform.position).normalized;
@@ -82,6 +92,7 @@ public class EnemyShotgunAI : MonoBehaviour
         return hit.collider != null && hit.collider.CompareTag("Player");
     }
 
+    // Rotate the enemy to face the player
     void LookAtPlayer()
     {
         Vector2 dir = (player.position - transform.position).normalized;
@@ -89,12 +100,19 @@ public class EnemyShotgunAI : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
+    // Fires three bullets with spread effect
     void ShootShotgun()
     {
         Vector3 spawnPos = transform.position + transform.right * 0.5f;
 
+        if (shootSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(shootSound);
+        }
+
         for (int i = -1; i <= 1; i++)
         {
+            // Create bullet spread by modifying angle and spawn offset
             Quaternion rotation = transform.rotation * Quaternion.Euler(0, 0, i * spreadAngle);
             Vector3 offset = transform.up * i * 0.1f;
 
@@ -109,7 +127,7 @@ public class EnemyShotgunAI : MonoBehaviour
         }
     }
 
-
+    // Visualize vision radius in the editor
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
