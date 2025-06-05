@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using UnityEngine.EventSystems; 
+using UnityEngine.SceneManagement;
+
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,6 +14,9 @@ public class PlayerMovement : MonoBehaviour
     private bool isAiming = false;
     public Sprite playerWithoutGunSprite; // Unarmed player sprite
     public float dropForce = 8f; // Throw speed
+
+    private SpriteRenderer spriteRenderer;
+
 
     public AnimatorOverrideController armedOverrideController;
     private RuntimeAnimatorController originalController;
@@ -39,12 +44,18 @@ public class PlayerMovement : MonoBehaviour
 
     public PlayerGunHandler gunHandler;
 
+    private bool isPushingObject = false;
+    public float pushSlowdownFactor = 0.5f; // 50% slower
+
+
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         playerCollider = GetComponent<Collider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
 
         // Save original (unarmed) animator controller
         originalController = animator.runtimeAnimatorController;
@@ -100,7 +111,26 @@ public class PlayerMovement : MonoBehaviour
             return; // Don't apply movement if rolling
 
         rb.velocity = isAiming ? Vector2.zero : movement * moveSpeed;
+        float effectiveSpeed = isPushingObject ? moveSpeed * pushSlowdownFactor : moveSpeed;
+        rb.velocity = isAiming ? Vector2.zero : movement * effectiveSpeed;
     }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Movable"))
+        {
+            isPushingObject = true;
+        }
+    }
+
+    void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.collider.CompareTag("Movable"))
+        {
+            isPushingObject = false;
+        }
+    }
+
 
 
 
@@ -151,13 +181,13 @@ public class PlayerMovement : MonoBehaviour
 
     private IEnumerator RollRoutine()
     {
-        
         isRolling = true;
         canRoll = false;
 
-        Debug.Log("Player is invulnerable");
+        Color originalColor = spriteRenderer.color;
+        spriteRenderer.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
 
-        // Disable collision with all bullets
+        // Invulnerabilidad
         Collider2D[] allBullets = FindObjectsOfType<Collider2D>();
         foreach (var bulletCol in allBullets)
         {
@@ -165,7 +195,6 @@ public class PlayerMovement : MonoBehaviour
                 Physics2D.IgnoreCollision(playerCollider, bulletCol, true);
         }
 
-        // Determine roll direction
         Vector2 rollDir = isAiming ? transform.right.normalized : movement.normalized;
         if (rollDir == Vector2.zero)
             rollDir = transform.right.normalized;
@@ -176,9 +205,10 @@ public class PlayerMovement : MonoBehaviour
 
         rb.velocity = Vector2.zero;
         isRolling = false;
-        Debug.Log("Player is vulnerable again");
 
-        // Re-enable collision with bullets
+        // Restaurar color
+        spriteRenderer.color = originalColor;
+
         foreach (var bulletCol in allBullets)
         {
             if (bulletCol != null && bulletCol.CompareTag("Bullet"))
@@ -187,11 +217,10 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-
         yield return new WaitForSeconds(rollCooldown);
         canRoll = true;
-        Debug.Log("Roll is ready again");
     }
+
 
 
 
@@ -291,14 +320,16 @@ public class PlayerMovement : MonoBehaviour
 
     public void QuitGame()
     {
-        Debug.Log("Quitting game...");
-
-    #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false; // Solo para tests en el editor
-    #else
-        Application.Quit(); // Para builds reales
-    #endif
+        Debug.Log("Returning to Main Menu...");
+        SceneManager.LoadScene("MainMenuUI"); // Usa el nombre exacto de la escena de menú
     }
+
+    public void RestartLevel()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
 
 
 

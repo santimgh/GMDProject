@@ -30,13 +30,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8124466934715387955}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.37, y: -5.37, z: -0.022503044}
+  m_LocalRotation: {x: -0, y: -0, z: -0.552229, w: 0.83369255}
+  m_LocalPosition: {x: 3.1941326, y: -1.36197, z: 0.032760955}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -67.04}
 --- !u!212 &4874205223314962460
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -97,11 +97,11 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8124466934715387955}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 30
+  m_Mass: 70
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 0
@@ -145,7 +145,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: -0.03646356, y: -0.0042898655}
@@ -195,6 +195,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5308acd81256c00498c33f08aceacbf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isPlayer: 0
+  pauseMenuCanvas: {fileID: 0}
+  resumeButton: {fileID: 0}
+  restartButton: {fileID: 0}
+  playerInput: {fileID: 0}
 --- !u!114 &5005004347386804027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,8 +212,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80eca57f43d50334497a2a4eab5e1b5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  visionRadius: 8
-  loseSightRadius: 12
+  visionRadius: 6
+  loseSightRadius: 8
   shootingCooldown: 2
   bulletPrefab: {fileID: 7939611067567353684, guid: 639242e69ba43b3488a03617ce4bbfc8, type: 3}
   bulletSpeed: 10
